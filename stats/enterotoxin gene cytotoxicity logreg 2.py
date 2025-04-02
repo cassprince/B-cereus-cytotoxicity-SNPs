@@ -15,10 +15,14 @@ from statsmodels.sandbox.stats.multicomp import multipletests
 from scipy import stats
 import statsmodels.api as sm
 
+import matplotlib.pyplot as plt
+
+from sklearn.metrics import mean_squared_error
+
+
 mSheet = pd.read_excel(r"C:\Users\cassp\OneDrive\Documents\Kovac Lab\Biomarkers paper\Mastersheet_no_clones.xlsx")
-cytotoxicity = mSheet.loc[:, "Average Cell Viability ( >0.7 is cytotoxic)"].values
-cytotoxicity = cytotoxicity.reshape(-1,1)
-testY = pd.DataFrame(cytotoxicity, dtype = "int")
+cytotoxicity = mSheet.loc[:, "Average Cell Viability ( >0.7 is cytotoxic)"]
+testX = pd.DataFrame(cytotoxicity)
 
 yvals_prep = mSheet.loc[:, "vir|nhe":"sphingomyelinase_Sph(gene)"]
 
@@ -55,12 +59,17 @@ for gene in yvals:
     else:
         test = stats.ttest_ind(withGene, withoutGene, equal_var = False)
     
-    log_reg = sm.Logit(col, testY).fit() #Fit the logistic regression model.
+    log_reg = sm.Logit(col, testX).fit() #Fit the logistic regression model.
     print(log_reg.summary())
-    pred = list(map(round, log_reg.predict(col)))
+    
+    print(type(log_reg))
+
+    pred = list(map(round, log_reg.predict(testX))) #Predict gene presence based on fitted logreg and cytotoxicity values
+    print(mean_squared_error(col, pred))
+    
     confMatrix = confusion_matrix(col, pred).flatten()
     
-    #print(confMatrix)
+    print(confMatrix)
     
     #print(f"Model score: {model.score(cytotoxicity, col)}") #accuracy of fit
     #print(confusion_matrix(col, model.predict(cytotoxicity)))
@@ -88,3 +97,18 @@ reject_LR = pd.DataFrame(p_adjusted_LR[0], columns = ["LogReg Reject null hypoth
 dfOutput = pd.concat([dfOutput, corrected_LR, reject_LR], axis = 1)
 
 dfOutput.to_csv(r"C:\Users\cassp\OneDrive\Documents\Kovac Lab\Biomarkers paper\gene_presence_stats_statsmodels.csv")
+
+
+
+
+
+plt.plot(testX, col, linestyle='none', marker='o')
+test_ext = np.arange(-0.3, 1.3, 0.05)
+pred_real = list(map(round, log_reg.predict(testX)))
+pred_ext = list(map(round, log_reg.predict(testX)))
+plt.plot(testX, pred, color='b')
+plt.plot(test_ext, pred_ext, color='r')
+
+
+
+

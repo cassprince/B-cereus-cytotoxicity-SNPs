@@ -13,13 +13,13 @@ df$NPV = df$True.Negatives/(df$True.Negatives + df$False.Negatives)
 
 
 df_SNP = data.frame(read_excel("C:\\Users\\cassp\\OneDrive\\Documents\\Kovac Lab\\Biomarkers paper\\SNP hits\\Covars 8_14_23\\SNP_hits_sheet.xlsx"))
-df_gene = data.frame(read.csv("C:\\Users\\cassp\\OneDrive\\Documents\\Kovac Lab\\Biomarkers paper\\gene_presence_stats_statsmodels.csv"))
+df_gene = data.frame(read.csv("C:\\Users\\cassp\\OneDrive\\Documents\\Kovac Lab\\Biomarkers paper\\gene_presence_stats_statsmodels_split.csv"))
 df_gene$Gene = gsub("vir_", "", df_gene$Gene)
 df_gene$diff = df_gene$Avg.Cytotoxicity.With - df_gene$Avg.Cytotoxicity.Without
 df_gene$Sensitivity = df_gene$True.Positives/(df_gene$True.Positives + df_gene$False.Negatives)
 df_gene$Specificity = df_gene$True.Negatives/(df_gene$True.Negatives + df_gene$False.Positives)
 df_gene$NPV = df_gene$True.Negatives/(df_gene$True.Negatives + df_gene$False.Negatives)
-df_gene = df_gene %>% filter(row_number() <= n()-1)
+df_gene = df_gene %>% filter(row_number() <= n()-1) %>% filter(Gene != "sph")
 
 
 cytotoxicity<-df_SNP[,"Average.Cell.Viability"]
@@ -98,7 +98,7 @@ tile2 = ggplot(df2_gene, aes(x = name, y = Gene, fill= value)) +
 
 tile2
 
-ggsave("C:\\Users\\cassp\\OneDrive\\Documents\\Kovac Lab\\Figures\\Biomarkers\\sen_spec_heatmap_gene_4_24_24.png", tile2, width = 5, height = 5, units = "in")
+ggsave("C:\\Users\\cassp\\OneDrive\\Documents\\Kovac Lab\\Figures\\Biomarkers\\sen_spec_heatmap_gene_2_11_25.png", tile2, width = 5, height = 5, units = "in")
 
 
 

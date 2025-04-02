@@ -16,9 +16,8 @@ from scipy import stats
 import statsmodels.api as sm
 
 mSheet = pd.read_excel(r"C:\Users\cassp\OneDrive\Documents\Kovac Lab\Biomarkers paper\Mastersheet_no_clones.xlsx")
-cytotoxicity = mSheet.loc[:, "Average Cell Viability ( >0.7 is cytotoxic)"].values
-cytotoxicity = cytotoxicity.reshape(-1,1)
-testY = pd.DataFrame(cytotoxicity, dtype = "int")
+cytotoxicity = mSheet.loc[:, "Average Cell Viability ( >0.7 is cytotoxic)"]
+testY = pd.DataFrame(cytotoxicity)
 
 yvals_prep = mSheet.loc[:, "vir|nhe":"sphingomyelinase_Sph(gene)"]
 

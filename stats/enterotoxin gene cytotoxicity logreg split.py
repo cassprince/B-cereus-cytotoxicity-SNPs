@@ -15,10 +15,15 @@ from statsmodels.sandbox.stats.multicomp import multipletests
 from scipy import stats
 import statsmodels.api as sm
 
+import matplotlib.pyplot as plt
+
+from sklearn.metrics import mean_squared_error
+from sklearn.model_selection import train_test_split 
+
+
 mSheet = pd.read_excel(r"C:\Users\cassp\OneDrive\Documents\Kovac Lab\Biomarkers paper\Mastersheet_no_clones.xlsx")
-cytotoxicity = mSheet.loc[:, "Average Cell Viability ( >0.7 is cytotoxic)"].values
-cytotoxicity = cytotoxicity.reshape(-1,1)
-testY = pd.DataFrame(cytotoxicity, dtype = "int")
+cytotoxicity = mSheet.loc[:, "Average Cell Viability ( >0.7 is cytotoxic)"]
+testX = pd.DataFrame(cytotoxicity)
 
 yvals_prep = mSheet.loc[:, "vir|nhe":"sphingomyelinase_Sph(gene)"]
 
@@ -42,10 +47,9 @@ yvals["vir_cytK1"] = np.where(yvals_prep["vir|cytK"].str.contains("cytK-1"), 1, 
 yvals["vir_cytK2"] = np.where(yvals_prep["vir|cytK"].str.contains("cytK-2"), 1, 0)
 yvals["vir_sph"] = np.where(yvals_prep["sphingomyelinase_Sph(gene)"].str.contains("1/1"), 1, 0)
 
-
 position = 0
 for gene in yvals:
-    col = yvals[gene]
+    col = yvals['vir_cytK2']
     withGene = cytotoxicity[col == 1]
     withoutGene = cytotoxicity[col == 0]
     variance = withGene.var()/withoutGene.var()
@@ -55,12 +59,22 @@ for gene in yvals:
     else:
         test = stats.ttest_ind(withGene, withoutGene, equal_var = False)
     
-    log_reg = sm.Logit(col, testY).fit() #Fit the logistic regression model.
-    print(log_reg.summary())
-    pred = list(map(round, log_reg.predict(col)))
-    confMatrix = confusion_matrix(col, pred).flatten()
+    X_train, X_test, y_train, y_test = train_test_split(testX, col, 
+                                       random_state=104,  
+                                       test_size=0.3,  
+                                       shuffle=True) 
     
-    #print(confMatrix)
+    log_reg = sm.Logit(y_train, X_train).fit() #Fit the logistic regression model.
+    print(log_reg.summary())
+    
+
+    pred = list(map(round, log_reg.predict(X_test))) #Predict gene presence based on fitted logreg and cytotoxicity values
+    print(mean_squared_error(y_test, pred))
+    
+    confMatrix = confusion_matrix(y_test, pred).flatten()
+    
+    print(confMatrix)
+
     
     #print(f"Model score: {model.score(cytotoxicity, col)}") #accuracy of fit
     #print(confusion_matrix(col, model.predict(cytotoxicity)))
@@ -72,8 +86,8 @@ for gene in yvals:
     dfOutput.loc[position, "Stdev Cytotoxicity Without"] = withoutGene.std()
     #Record logistic regression specific data.
     dfOutput.iloc[position, 1:5] = confMatrix
-    dfOutput.loc[position, "Accuracy"] = accuracy_score(col, pred)
-    dfOutput.loc[position, "Precision"] = precision_score(col, pred)
+    dfOutput.loc[position, "Accuracy"] = accuracy_score(y_test, pred)
+    dfOutput.loc[position, "Precision"] = precision_score(y_test, pred)
     dfOutput.loc[position, "LogReg p-val Cyt"] = log_reg.pvalues[0]
     #Record two-sample t-test specific data.
     dfOutput.loc[position, "# with"] = len(withGene)
@@ -87,4 +101,21 @@ corrected_LR = pd.DataFrame(p_adjusted_LR[1], columns = ["LogReg Bonferroni Corr
 reject_LR = pd.DataFrame(p_adjusted_LR[0], columns = ["LogReg Reject null hypothesis?"])
 dfOutput = pd.concat([dfOutput, corrected_LR, reject_LR], axis = 1)
 
-dfOutput.to_csv(r"C:\Users\cassp\OneDrive\Documents\Kovac Lab\Biomarkers paper\gene_presence_stats_statsmodels.csv")
+
+
+dfOutput.to_csv(r"C:\Users\cassp\OneDrive\Documents\Kovac Lab\Biomarkers paper\gene_presence_stats_statsmodels_split.csv")
+
+
+
+plt.plot(X_test, y_test, linestyle='none', marker='o')
+test_ext = np.arange(-0.3, 1.3, 0.05)
+#pred_real = list(map(round, log_reg.predict(testX)))
+#pred_ext = list(map(round, log_reg.predict(testX)))
+#plt.plot(X_test, pred, color='b')
+#plt.plot(test_ext, pred_ext, color='r')
+
+
+
+
+
+
