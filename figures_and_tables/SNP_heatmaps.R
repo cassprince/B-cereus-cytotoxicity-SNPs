@@ -4,13 +4,8 @@ library(tidyverse)
 library(readxl)
 library(grid)
 
-df = data.frame(read_excel("C:\\Users\\cassp\\OneDrive\\Documents\\Kovac Lab\\Biomarkers paper\\SNP hits\\Covars 8_14_23\\SNP_logreg_master.xlsx"))
-df$SNP = paste(df$Gene, df$Identity, sep = " ")
+df = data.frame(read_csv("C:\\Users\\cassp\\OneDrive\\Documents\\Kovac Lab\\Biomarkers paper\\SNP hits\\4_21_25\\SNP_mastersheet_4_22_25.csv"))
 df$diff = abs(df$Avg.Cytotoxicity.With - df$Avg.Cytotoxicity.Without)
-df$Sensitivity = df$True.Positives/(df$True.Positives + df$False.Negatives)
-df$Specificity = df$True.Negatives/(df$True.Negatives + df$False.Positives)
-df$NPV = df$True.Negatives/(df$True.Negatives + df$False.Negatives)
-
 
 df_SNP = data.frame(read_excel("C:\\Users\\cassp\\OneDrive\\Documents\\Kovac Lab\\Biomarkers paper\\SNP hits\\Covars 8_14_23\\SNP_hits_sheet.xlsx"))
 df_gene = data.frame(read.csv("C:\\Users\\cassp\\OneDrive\\Documents\\Kovac Lab\\Biomarkers paper\\gene_presence_stats_statsmodels_split.csv"))
@@ -72,18 +67,23 @@ ggplot(df_SNP_long, aes(x=SNP, y=Average.Cell.Viability, fill=value))+
 
 ####----accuracy and precision
 
-df2 = pivot_longer(df, cols = c('Accuracy', 'Precision', 'Sensitivity', 'Specificity'))
-df2$Identity = with(df2, factor(Identity, levels = rev(unique(df2$Identity))))
+df2 = pivot_longer(df, cols = c('acc', 'prec', 'sens', 'spec'))
+df2$label_tile = with(df2, factor(label_tile, levels = rev(unique(df2$label_tile))))
 
-tile = ggplot(df2, aes(x = name, y = Identity, fill= value)) + 
+tile = ggplot(df2, aes(x = name, y = label_tile, fill= value)) + 
   geom_tile() +
   scale_fill_gradient(low="white", high="cornflowerblue") +
   geom_text(aes(label = round(value, digits = 2)), color = "black", size = 4) +
   theme_prism()+
-  theme(text = element_text(size = 16))+
-  theme(axis.text.x = element_text(angle=45, hjust = 1, vjust = 1))
+  theme(text = element_text(size = 16),
+        axis.text.x = element_text(angle=45, hjust = 1, vjust = 1),
+        legend.position = "none") +
+  labs(x = "", y = "") +
+  scale_x_discrete(labels = c("Accuracy", "Precision", "Sensitivity", "Specificity"))
 
-ggsave("C:\\Users\\cassp\\OneDrive\\Documents\\Kovac Lab\\Figures\\Biomarkers\\sens_spec_heatmap_SNP.png", tile, width = 5.5, height = 9, units = "in")
+tile
+
+ggsave("C:\\Users\\cassp\\OneDrive\\Documents\\Kovac Lab\\Figures\\Biomarkers\\sens_spec_heatmap_SNP_4_22_25.png", tile, width = 4.2, height = 9.2, units = "in")
 
 
 df2_gene = pivot_longer(df_gene, cols = c('Accuracy', 'Precision', 'Sensitivity', 'Specificity'))
@@ -107,26 +107,22 @@ ggsave("C:\\Users\\cassp\\OneDrive\\Documents\\Kovac Lab\\Figures\\Biomarkers\\s
 
 df3 = pivot_longer(df, cols = c('Avg.Cytotoxicity.With', 'Avg.Cytotoxicity.Without'))
 
-ggplot(df3, aes(x = name, y = SNP, fill= value)) + 
-  geom_tile() +
-  scale_fill_gradient(low="white", high="#e5c9ff") +
-  geom_text(aes(label = round(value, digits = 2)), color = "black", size = 4) +
-  theme_prism()
 
 
+df$label_tile = with(df,factor(label_tile,levels = unique(df$label_tile)))
 
-df$SNP = with(df,factor(SNP,levels = unique(df$SNP)))
-
-bar = ggplot(df, aes(x = SNP, y = diff, fill = diff)) + 
+bar = ggplot(df, aes(x = label_tile, y = diff, fill = diff)) + 
   geom_col(color = "black") +
   scale_fill_gradient(low="white", high="cornflowerblue") +
   scale_y_continuous(expand= c(0,0), limits = c(0,0.4)) +
   ylab("Difference in Cytotoxicity") +
   theme_prism(axis_text_angle = 45)+
-  theme(axis.text.y = element_text(angle = 90, vjust = 2, hjust=0.5))+
-  theme(text = element_text(size = 13))
+  theme(axis.text.y = element_text(angle = 90, vjust = 2, hjust=0.5),
+        text = element_text(size = 18),
+        legend.position = "none")
+bar
 
-ggsave("C:\\Users\\cassp\\OneDrive\\Documents\\Kovac Lab\\Figures\\Biomarkers\\bar_SNP.png", bar, width = 8, height = 3, units = "in")
+ggsave("C:\\Users\\cassp\\OneDrive\\Documents\\Kovac Lab\\Figures\\Biomarkers\\bar_SNP_4_22_25.png", bar, width = 8, height = 4, units = "in")
 
 df_gene$Gene = with(df_gene,factor(Gene,levels = unique(df_gene$Gene)))
 
@@ -153,23 +149,23 @@ dev.off()
 
 ######Hydrophobicity
 
-setwd("C:\\Users\\cassp\\OneDrive\\Documents\\Kovac Lab\\Biomarkers paper\\SNP hits\\Covars 8_14_23")
-df = data.frame(read_excel("snp_hydrophobicity.xlsx"))
 
-df$snp = with(df,factor(snp,levels = unique(df$snp)))
+df$label_aa = with(df,factor(label_aa,levels = unique(df$label_aa)))
 yticks = c(-60, -30, 0, 30, 60)
 
-p = ggplot(df, aes(x = snp, y = diff, fill = diff)) + 
+p = ggplot(df, aes(x = label_aa, y = diff_hp, fill = diff_hp)) + 
   geom_col(color = "black") + 
   scale_fill_gradient(low="white", high="cornflowerblue") +
   scale_y_continuous(breaks = yticks) +
-  ylab("SNP") +
-  ylab("Difference in Hydrophobicity") +
+  labs(y = "Difference in Hydrophobicity", x= "") +
   theme_prism() +
   theme_prism(axis_text_angle = 45) +
-  theme(axis.text.y = element_text(angle = 90, vjust = 2, hjust=0.5)) +
-  theme(text = element_text(size = 12)) 
+  theme(axis.text.y = element_text(angle = 90, vjust = 2, hjust=0.5),
+        text = element_text(size = 18),
+        legend.position = "none") 
 
-ggsave("C:\\Users\\cassp\\OneDrive\\Documents\\Kovac Lab\\Figures\\Biomarkers\\snp_hydrophobicity.png", p, dpi = 600, width = 8, height = 2.75, units = "in")
+p
+
+ggsave("C:\\Users\\cassp\\OneDrive\\Documents\\Kovac Lab\\Figures\\Biomarkers\\snp_hydrophobicity_4_23_25.png", p, dpi = 600, width = 4, height = 4, units = "in")
 
 

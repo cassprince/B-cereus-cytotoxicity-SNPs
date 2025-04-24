@@ -19,9 +19,9 @@ import statsmodels.api as sm
 import os
 
 #Set working directiory and load in alignment and data.
-os.chdir(r'C:\Users\cassp\OneDrive\Documents\Kovac Lab\Biomarkers paper\Gene alignments 8_4_23')
+os.chdir(r'C:\Users\cassp\OneDrive\Documents\Kovac Lab\Biomarkers paper\upstream_4_21_25')
 
-file = 'nheC_gene alignment.fasta'
+file = 'cytkUp_filt.fasta'
 mSheet = pd.read_excel(r"C:\Users\cassp\OneDrive\Documents\Kovac Lab\Biomarkers paper\Mastersheet_no_clones.xlsx") #import file with cytotoxicity data (same order as fasta)
 
 mSheet['Adjusted panC Group (predicted species)'] = mSheet['Adjusted panC Group (predicted species)'].replace({'Group_clarus' : 0, 'Group_I(pseudomycoides)' : 1, 'Group_II(mosaicus/luti)': 2, 'Group_III(mosaicus)': 3, 'Group_IV(cereus_sensu_stricto)': 4, 'Group_V(toyonensis)': 5, 'Group_VI(mycoides/paramycoides)': 6, 'Group_VII(cytotoxicus)' : 7, 'Group_VIII(mycoides)' : 8})
@@ -33,8 +33,8 @@ dfOutput = pd.DataFrame(0, index = range(100000), columns = ["Gene", "Position",
 
 fileName = str(file)
 fileName = fileName.replace(".fasta", "")
-fileName = fileName.replace("C:\\Users\\cassp\\OneDrive\\Documents\\Kovac Lab\\Biomarkers paper\\Gene alignments 8_4_23\\", "")
-gene = fileName.replace("_gene alignment", "")
+fileName = fileName.replace("C:\\Users\\cassp\\OneDrive\\Documents\\Kovac Lab\\Biomarkers paper\\upstream_4_21_25\\", "")
+gene = fileName.replace("Up", "_promoter")
 print(gene)
 
 alignmentSeq = AlignIO.read(file, "fasta") #Import alignment file of sequences in fasta format.
@@ -45,20 +45,23 @@ for record in alignmentSeq:
     #Change names to match mastersheet. If you downloaded the sequences of hits from BTyper3, this should work. If you procured sequences by other means, you may need to change this part so you can get matching names with the mastersheet.
     
     recordID = record.id
-    PS_ID = recordID.split("_", 1)[0]
+    print(recordID)
+    PS_ID = recordID.split("___", 1)[1]
+    PS_ID = PS_ID.split("_", 1)[0]
+    print(PS_ID)
     row = mSheet[mSheet["Isolate"].str.contains(PS_ID)]
     if len(row) != 0:
         IDs.append(PS_ID)
-
+        
     
+
+
 dfIDs = pd.DataFrame(IDs, columns = ["Isolate"]) 
 
 data = dfIDs.merge(metadata)
 #data = data.sort_values('Isolate')
 cytotoxicity = data['Average Cell Viability ( >0.7 is cytotoxic)'].values
 cytotoxicity = cytotoxicity.reshape(-1,1)
-
-
 
 #Define the function that applies the logistic regression model to each site in the alignment.
 def modelTox(nTP, cutoff1, cutoff2, p_cutoff, a_cutoff):
@@ -119,7 +122,7 @@ def modelTox(nTP, cutoff1, cutoff2, p_cutoff, a_cutoff):
                 dfOutput.loc[position, "# with"] = len(withNTP)
                 dfOutput.loc[position, "# without"] = len(withoutNTP)
                 #Record logistic regression specific data.
-                dfOutput.iloc[position, 4:8] = confMatrix
+                dfOutput.iloc[position, 5:9] = confMatrix
                 dfOutput.loc[position, "Accuracy"] = acc
                 dfOutput.loc[position, "Precision"] = prec
                 dfOutput.loc[position, "LogReg p-val Cyt"] = log_reg.pvalues[0]
@@ -159,9 +162,9 @@ dfOutput = pd.concat([dfOutput, corrected_cyt, corrected_phylo, reject_cyt, reje
 dfOutput = dfOutput[dfOutput['Nucleotide'] != 0]
 
 df_filt = dfOutput[dfOutput["LogReg Cyt Reject null hypothesis?"] == True]
-
+data_filt = pd.concat([data.iloc[:,0:3], data[dfOutput["name"]]], axis = 1)
 
 #Save the output files as .csv files. dfOutput has the general info about the SNPs. data is the SNP presence/absence matrix.
-os.chdir(r'C:\Users\cassp\OneDrive\Documents\Kovac Lab\Biomarkers paper\SNP hits\4_21_25')
+os.chdir(r'C:\Users\cassp\OneDrive\Documents\Kovac Lab\Biomarkers paper\upstream_4_21_25')
 df_filt.to_csv(f"{gene}_logreg_4_21_25.csv")
 data.to_csv(f"{gene}_snps_4_21_25.csv")
