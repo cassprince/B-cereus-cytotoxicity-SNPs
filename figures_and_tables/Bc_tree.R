@@ -12,31 +12,37 @@ library(viridis)
 library(RColorBrewer)
 
 setwd("C:\\Users\\cassp\\OneDrive\\Documents\\Kovac Lab\\Biomarkers paper")
-df = data.frame(read_excel("Mastersheet_no_clones.xlsx"))
-df[,"Adjusted.panC.Group..predicted.species."] = gsub("[*].*$", "", df[,"Adjusted.panC.Group..predicted.species."])
 
-snps = data.frame(read_excel("C:\\Users\\cassp\\OneDrive\\Documents\\Kovac Lab\\Biomarkers paper\\SNP hits\\Covars 8_14_23\\SNP_hits_sheet.xlsx"))
-snps_for_tree = snps[4:24]
-rownames(snps_for_tree) = snps[,"Isolate"]
+snps = read_csv("C:\\Users\\cassp\\OneDrive\\Documents\\Kovac Lab\\Biomarkers paper\\SNP hits\\4_21_25\\SNP_hits_4_22_25.csv")
+snps_nonsyn = snps %>% 
+  select(Isolate, HblA_D194E:nhe_promoter_544T) 
+snps_nonsyn = snps_nonsyn %>%
+  mutate_at(colnames(snps_nonsyn), factor) %>%
+  column_to_rownames(var = "Isolate") %>% 
+  select(starts_with(c("H", "N"), ignore.case = FALSE)) 
 
-cytotoxicity = data.frame(df[,"Average.Cell.Viability....0.7.is.cytotoxic."])
-clade = data.frame(clade = df[,"Adjusted.panC.Group..predicted.species."])
+snps_syn = snps %>% 
+  select(Isolate, HblA_D194E:nhe_promoter_544T) 
+snps_syn = snps_syn %>%
+  mutate_at(colnames(snps_syn), factor) %>% 
+  column_to_rownames(var = "Isolate") %>% 
+  select(-starts_with(c("H", "N"), ignore.case = FALSE)) %>%
+  as.data.frame()
 
-nhe = data.frame(nhe = as.character(grepl("3/3", df$vir.nhe)))
-hbl = data.frame(hbl = as.character(grepl("hblA.*hblC.*hblD", df$vir.hbl)))
-cytk1 = data.frame(cytk1 = as.character(grepl("cytK-1", df$vir.cytK)))
-cytk2 = data.frame(cytk2 = as.character(grepl("cytK-2", df$vir.cytK)))
-genes = data.frame(cbind(nhe = nhe, hbl = hbl, cytk1 = cytk1, cytk2 = cytk2))
+genes = snps %>% 
+  select(Isolate, nhe:cytk2) 
+genes = genes %>%
+  mutate_at(colnames(genes), factor) %>% 
+  column_to_rownames(var = "Isolate") 
 
-rownames(genes) = df[,"Isolate"]
-rownames(cytotoxicity) = df[,"Isolate"]
-rownames(clade) = df[,"Isolate"]
-clade2 = data.frame(cbind(label = rownames(clade), clade = clade))
+cytotoxicity = snps %>%
+  select(Isolate, Average.Cell.Viability) %>% 
+  column_to_rownames(var = "Isolate")
 
 tree = read.newick("core_SNPs_matrix.biomarker.contree")
 tree$tip.label = gsub("_contigs.fasta", "", tree$tip.label)
 tree$tip.label = gsub(".fasta", "", tree$tip.label)
-tree_mid <- midpoint(tree)
+tree_mid = midpoint(tree)
 
 
 
@@ -46,36 +52,22 @@ p = ggtree(tree_mid, size = 0.5) + geom_tiplab(size=1) + geom_treescale(linesize
   scale_fill_gradient(low = "white", high = "black", name = "Bootstrap\npercentage") +
   new_scale_fill() 
 
-
-p_phylo = gheatmap(p, clade, offset=0.1, width=0.015, font.size=1, colnames = FALSE, color=NA) +
-  scale_fill_discrete(name = "group", na.value = "white") + 
-  ylim(-0.75, NA) + 
-  coord_cartesian(clip = "off")
-
-p_genes = gheatmap(p, genes, width=0.05, offset=0.107, font.size=1.5, color=NA, colnames_angle = 45, colnames_offset_y = -0.75) +
-  scale_fill_manual(values = c("TRUE" = "#125c8a", "FALSE" = "#c5d9ed"), na.value = "white", labels=c('Absent','Present'), name = "Gene Presence") +
+p_genes = gheatmap(p, genes, width=0.04, offset=0.07, font.size=1.5, color=NA, colnames_angle = 45, colnames_offset_y = -0.75) +
+  scale_fill_manual(values = c("1" = "#125c8a", "0" = "#c5d9ed"), na.value = "white", labels=c('Absent','Present'), name = "Gene Presence") +
   new_scale_fill() 
 
-p_snps = gheatmap(p_genes, snps_for_tree, width=0.3, offset=0.14, font.size=1.5, color=NA, colnames_angle = 45, colnames_offset_y = -0.75) +
+p_snps_syn = gheatmap(p_genes, snps_syn, width=0.16, offset=0.09, font.size=1.5, color=NA, colnames_angle = 45, colnames_offset_y = -0.75) +
   scale_fill_manual(values = c("1" = "#125c8a", "0" = "#c5d9ed", "NA" = "white"), na.value = "white", labels=c('Absent','Present','Gene absent'), name = "SNP Presence") +
   new_scale_fill()
 
-p_tox = gheatmap(p_snps, cytotoxicity, width=0.03, offset=0.08, font.size=1.5, color=NA, colnames = FALSE) + 
+p_snps_nonsyn = gheatmap(p_snps_syn, snps_nonsyn, width=0.08, offset=0.157, font.size=1.5, color=NA, colnames_angle = 45, colnames_offset_y = -0.75) +
+  scale_fill_manual(values = c("1" = "#125c8a", "0" = "#c5d9ed", "NA" = "white"), na.value = "white", labels=c('Absent','Present','Gene absent'), name = "SNP Presence") +
+  new_scale_fill()
+
+p_tox = gheatmap(p_snps_nonsyn, cytotoxicity, width=0.03, offset=0.05, font.size=1.5, color=NA, colnames = FALSE) + 
   scale_fill_distiller(palette = "Reds", direction = 1, na.value = "white", "Cytotoxicity")  
-#scale_fill_viridis(option = "B", direction = -1)
-#scale_fill_gradient(low = "white", high = "black", name = "Cytotoxicity")
 
-p_tox
-
-#"1" = "#532196", "0" = "#d2c3e6"
-
-png(file = "C:\\Users\\cassp\\OneDrive\\Documents\\Kovac Lab\\Figures\\Biomarkers\\gene_snp_tree_9_13_24.png", units = "in", width = 14, height = 11, res = 600)
-#svg(file = "C:\\Users\\cassp\\OneDrive\\Documents\\Kovac Lab\\Figures\\Biomarkers\\gene_tree.svg")
-
-p_tox
-
-dev.off()
-
+ggsave("C:\\Users\\cassp\\OneDrive\\Documents\\Kovac Lab\\Figures\\Biomarkers\\gene_snp_tree_4_24_25.png", p_tox, units = "in", width = 14, height = 11, dpi = 600)
 
 
 

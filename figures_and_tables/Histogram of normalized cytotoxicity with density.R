@@ -15,8 +15,7 @@ group<-data[,"Adjusted.panC.Group..predicted.species."]
 group<-gsub("\\s*\\([^\\)]+\\)", "", group)
 data$Adjusted.panC.Group..predicted.species.<-gsub("_", " ", group)
 
-
-
+# Test for unimodality/normal distribution (p<0.05 is not unimodal)
 dip.test(cytotoxicity)
 
 plt <- ggplot(data, aes(x=cytotoxicity))+ 

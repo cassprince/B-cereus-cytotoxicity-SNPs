@@ -1,29 +1,30 @@
 library(tidyverse)
+library(readxl)
 setwd("C:\\Users\\cassp\\OneDrive\\Documents\\Kovac Lab\\Biomarkers paper\\SNP hits\\Covars 8_14_23")
 
 
 hblA = data.frame(read_csv("hblA_logreg_8_14_23.csv")) %>%
-  select("Gene", "Position", "Nucleotide", "True.Negatives","False.Positives", "False.Negatives", "True.Positives", "Avg.Cytotoxicity.With", "Avg.Cytotoxicity.Without", "Stdev.Cytotoxicity.With", "Stdev.Cytotoxicity.Without", "Change.the.aa.residue.")
+  select("Gene", "Position", "Nucleotide", "True.Negatives","False.Positives", "False.Negatives", "True.Positives", "Avg.Cytotoxicity.With", "Avg.Cytotoxicity.Without", "Stdev.Cytotoxicity.With", "Stdev.Cytotoxicity.Without", "Change.the.aa.residue.", "LogReg.Phylo.Reject.null.hypothesis.")
 hblB = data.frame(read_csv("hblB_logreg_8_14_23.csv")) %>%
-  select("Gene", "Position", "Nucleotide", "True.Negatives","False.Positives", "False.Negatives", "True.Positives", "Avg.Cytotoxicity.With", "Avg.Cytotoxicity.Without", "Stdev.Cytotoxicity.With", "Stdev.Cytotoxicity.Without", "Change.the.aa.residue.")
+  select("Gene", "Position", "Nucleotide", "True.Negatives","False.Positives", "False.Negatives", "True.Positives", "Avg.Cytotoxicity.With", "Avg.Cytotoxicity.Without", "Stdev.Cytotoxicity.With", "Stdev.Cytotoxicity.Without", "Change.the.aa.residue.", "LogReg.Phylo.Reject.null.hypothesis.")
 hblC = data.frame(read_csv("hblC_logreg_8_14_23.csv")) %>%
-  select("Gene", "Position", "Nucleotide", "True.Negatives","False.Positives", "False.Negatives", "True.Positives", "Avg.Cytotoxicity.With", "Avg.Cytotoxicity.Without", "Stdev.Cytotoxicity.With", "Stdev.Cytotoxicity.Without", "Change.the.aa.residue.")
+  select("Gene", "Position", "Nucleotide", "True.Negatives","False.Positives", "False.Negatives", "True.Positives", "Avg.Cytotoxicity.With", "Avg.Cytotoxicity.Without", "Stdev.Cytotoxicity.With", "Stdev.Cytotoxicity.Without", "Change.the.aa.residue.", "LogReg.Phylo.Reject.null.hypothesis.")
 hblD = data.frame(read_csv("hblD_logreg_8_14_23.csv")) %>%
-  select("Gene", "Position", "Nucleotide", "True.Negatives","False.Positives", "False.Negatives", "True.Positives", "Avg.Cytotoxicity.With", "Avg.Cytotoxicity.Without", "Stdev.Cytotoxicity.With", "Stdev.Cytotoxicity.Without", "Change.the.aa.residue.")
+  select("Gene", "Position", "Nucleotide", "True.Negatives","False.Positives", "False.Negatives", "True.Positives", "Avg.Cytotoxicity.With", "Avg.Cytotoxicity.Without", "Stdev.Cytotoxicity.With", "Stdev.Cytotoxicity.Without", "Change.the.aa.residue.", "LogReg.Phylo.Reject.null.hypothesis.")
 
 nheA = data.frame(read_csv("nheA_logreg_8_14_23.csv"))%>%
-  select("Gene", "Position", "Nucleotide", "True.Negatives","False.Positives", "False.Negatives", "True.Positives", "Avg.Cytotoxicity.With", "Avg.Cytotoxicity.Without", "Stdev.Cytotoxicity.With", "Stdev.Cytotoxicity.Without", "Change.the.aa.residue.")
+  select("Gene", "Position", "Nucleotide", "True.Negatives","False.Positives", "False.Negatives", "True.Positives", "Avg.Cytotoxicity.With", "Avg.Cytotoxicity.Without", "Stdev.Cytotoxicity.With", "Stdev.Cytotoxicity.Without", "Change.the.aa.residue.", "LogReg.Phylo.Reject.null.hypothesis.")
 nheB = data.frame(read_csv("nheB_logreg_8_14_23.csv")) %>%
-  select("Gene", "Position", "Nucleotide", "True.Negatives","False.Positives", "False.Negatives", "True.Positives", "Avg.Cytotoxicity.With", "Avg.Cytotoxicity.Without", "Stdev.Cytotoxicity.With", "Stdev.Cytotoxicity.Without", "Change.the.aa.residue.")
+  select("Gene", "Position", "Nucleotide", "True.Negatives","False.Positives", "False.Negatives", "True.Positives", "Avg.Cytotoxicity.With", "Avg.Cytotoxicity.Without", "Stdev.Cytotoxicity.With", "Stdev.Cytotoxicity.Without", "Change.the.aa.residue.", "LogReg.Phylo.Reject.null.hypothesis.")
 nheC = data.frame(read_csv("nheC_logreg_8_14_23.csv")) %>%
-  select("Gene", "Position", "Nucleotide", "True.Negatives","False.Positives", "False.Negatives", "True.Positives", "Avg.Cytotoxicity.With", "Avg.Cytotoxicity.Without", "Stdev.Cytotoxicity.With", "Stdev.Cytotoxicity.Without", "Change.the.aa.residue.")
+  select("Gene", "Position", "Nucleotide", "True.Negatives","False.Positives", "False.Negatives", "True.Positives", "Avg.Cytotoxicity.With", "Avg.Cytotoxicity.Without", "Stdev.Cytotoxicity.With", "Stdev.Cytotoxicity.Without", "Change.the.aa.residue.", "LogReg.Phylo.Reject.null.hypothesis.")
 
 nhe_up = data.frame(read_csv("C:\\Users\\cassp\\OneDrive\\Documents\\Kovac Lab\\Biomarkers paper\\upstream_4_21_25\\nhe_promoter_filt_logreg_4_21_25.csv")) %>%
-  select("Gene", "Position", "Nucleotide", "True.Negatives","False.Positives", "False.Negatives", "True.Positives", "Avg.Cytotoxicity.With", "Avg.Cytotoxicity.Without", "Stdev.Cytotoxicity.With", "Stdev.Cytotoxicity.Without") %>%
+  select("Gene", "Position", "Nucleotide", "True.Negatives","False.Positives", "False.Negatives", "True.Positives", "Avg.Cytotoxicity.With", "Avg.Cytotoxicity.Without", "Stdev.Cytotoxicity.With", "Stdev.Cytotoxicity.Without", "LogReg.Phylo.Reject.null.hypothesis.") %>%
   mutate("Change.the.aa.residue." = "FALSE")
 
 hbl_up = data.frame(read_csv("C:\\Users\\cassp\\OneDrive\\Documents\\Kovac Lab\\Biomarkers paper\\upstream_4_21_25\\hbl_promoter_filt_logreg_4_21_25.csv")) %>%
-  select("Gene", "Position", "Nucleotide", "True.Negatives","False.Positives", "False.Negatives", "True.Positives", "Avg.Cytotoxicity.With", "Avg.Cytotoxicity.Without", "Stdev.Cytotoxicity.With", "Stdev.Cytotoxicity.Without")%>%
+  select("Gene", "Position", "Nucleotide", "True.Negatives","False.Positives", "False.Negatives", "True.Positives", "Avg.Cytotoxicity.With", "Avg.Cytotoxicity.Without", "Stdev.Cytotoxicity.With", "Stdev.Cytotoxicity.Without", "LogReg.Phylo.Reject.null.hypothesis.")%>%
   mutate("Change.the.aa.residue." = "FALSE")
 
 all = rbind(hblA, hblB, hblC, hblD, nheA, nheB, nheC, nhe_up, hbl_up) %>%
@@ -70,13 +71,16 @@ nheB_snp = data.frame(read_csv("nheB_snps_8_14_23.csv")) %>%
 nhe_up_snp = data.frame(read_csv("C:\\Users\\cassp\\OneDrive\\Documents\\Kovac Lab\\Biomarkers paper\\upstream_4_21_25\\nhe_promoter_filt_snps_4_21_25.csv")) 
 colnames(nhe_up_snp) = sub("_filt", "", colnames(nhe_up_snp))
 
-df_master = data.frame(read_excel("C:\\Users\\cassp\\OneDrive\\Documents\\Kovac Lab\\Biomarkers paper\\Mastersheet_no_clones.xlsx")) %>% 
-  select(Isolate, Adjusted.panC.Group = Adjusted.panC.Group..predicted.species., Average.Cell.Viability = Average.Cell.Viability....0.7.is.cytotoxic.) %>%
+df_master = data.frame(read_excel("C:\\Users\\cassp\\OneDrive\\Documents\\Kovac Lab\\Biomarkers paper\\Mastersheet_no_clones.xlsx")) 
+ 
+df_master = df_master %>% 
+  mutate(nhe = ifelse(str_detect(df_master$vir.nhe, "nheA|nheB|nheC"), 1, 0)) %>% 
+  mutate(hbl = ifelse(str_detect(df_master$vir.hbl, "hblA|hblC|hblD"), 1, 0)) %>% 
+  mutate(cytK1 = ifelse(str_detect(df_master$vir.cytK, "cytK-1"), 1, 0)) %>% 
+  mutate(cytK2 = ifelse(str_detect(df_master$vir.cytK, "cytK-2"), 1, 0)) %>%
+  select(Isolate, Adjusted.panC.Group = Adjusted.panC.Group..predicted.species., Average.Cell.Viability = Average.Cell.Viability....0.7.is.cytotoxic., nhe, hbl, cytK1, cytK2) %>%
   mutate(Adjusted.panC.Group = gsub("[*].*$", "", Adjusted.panC.Group))
-
-df_genes = data.frame(read_csv("C:\\Users\\cassp\\OneDrive\\Documents\\Kovac Lab\\Biomarkers paper\\SNP_gene_hits.csv")) %>%
-  select(Isolate = "...1", nhe, hbl, cytk1, cytk2) 
-
+  
 var_names = read.csv("C:\\Users\\cassp\\OneDrive\\Documents\\Kovac Lab\\Biomarkers paper\\SNP hits\\4_21_25\\SNP_mastersheet_labels_4_22_25.csv") %>% 
   mutate(label_snp = paste0(Gene, "_", "SNP", "_", Position)) %>%
   select(label_final, label_snp) %>%
@@ -90,8 +94,6 @@ df_snp_final = left_join(df_master, hblA_snp, by = join_by("Isolate")) %>%
   left_join(nheA_snp, by = join_by("Isolate")) %>%
   left_join(nheB_snp, by = join_by("Isolate")) %>%
   left_join(nhe_up_snp, by = join_by("Isolate")) %>% 
-  left_join(df_genes, by = join_by("Isolate")) %>% 
-  select(Isolate, Adjusted.panC.Group, Average.Cell.Viability, nhe, hbl, cytk1, cytk2, snp_list) %>%
   mutate(Adjusted.panC.Group, Adjusted.panC.Group = recode(Adjusted.panC.Group, "Group_clarus" = "0", "Group_I(pseudomycoides)" = "1", "Group_II(mosaicus/luti)" = "2", "Group_III(mosaicus)" = "3", "Group_IV(cereus_sensu_stricto)" = "4", "Group_V(toyonensis)" = "5", "Group_VI(mycoides/paramycoides)" = "6", "Group_VII(cytotoxicus)" = "7", "Group_VIII(mycoides)" = "8")) %>%
   rename(!!!var_names)
 
