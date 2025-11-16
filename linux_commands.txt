@@ -1,0 +1,50 @@
+
+### Reformat genome names.
+
+awk '/^>/{print ">" substr(FILENAME,1,length(FILENAME)-6) "_" ++i ; next} 1' *_contigs.fasta > bc_contigs.fasta
+
+
+### Prepare genomes as BLAST database and run BLAST for the first genes in the nhe and hbl operons (nheA and hblC).
+
+makeblastdb -in bc_contigs.fasta -dbtype nucl -parse_seqids 
+blastn -db bc_contigs.fasta -query nheA.fasta -max_target_seqs 10000 -perc_identity 60 -qcov_hsp_perc 70 -task blastn -outfmt 7 -out nhe_blast.csv 
+blastn -db bc_contigs.fasta -query hblC.fasta -max_target_seqs 10000 -perc_identity 60 -qcov_hsp_perc 70 -task blastn -outfmt 7 -out hbl_blast.csv 
+
+
+### Separate genomes with enterotoxin genes on the + and - strands for sequence extraction.
+
+awk -F'\t' -v OFS='\t' '$9 - $10 > 0' nhe_blast.csv > nhe_minus.csv
+awk -F'\t' -v OFS='\t' '$9 - $10 < 0' nhe_blast.csv > nhe_plus.csv
+
+awk -F'\t' -v OFS='\t' '$9 - $10 > 0' hbl_blast.csv > hbl_minus.csv
+awk -F'\t' -v OFS='\t' '$9 - $10 < 0' hbl_blast.csv > hbl_plus.csv
+
+
+### Calculate 500 bp upstream of the BLAST start location and save to column 9. If the value is negative because the end of a contig is reached, set number to "1".
+awk -F'\t' -v OFS='\t' '{new_val=($9-500) < 1 ? 1 :($9-500); print $0, new_val}' nhe_plus.csv > nhe_plus_2.csv
+awk -F'\t' -v OFS='\t' '{$3 = $9 "\t" $3; $3=($3+500); print }' nhe_minus.csv > nhe_minus_2.csv
+
+awk -F'\t' -v OFS='\t' '{new_val=($9-500) < 1 ? 1 :($9-500); print $0, new_val}' hbl_plus.csv > hbl_plus_3.csv
+awk -F'\t' -v OFS='\t' '{$3 = $9 "\t" $3; $3=($3+500); print }' hbl_minus.csv > hbl_minus_2.csv
+
+
+### Extract sequences 500 bp upstream of nheA and hblC from BLAST start location.
+awk '{OFS="\t"}{print $2,$9,$13}' nhe_plus_2.csv | xargs -n 3 sh -c 'blastdbcmd -db bc_contigs.fasta -entry "$0" -range "$2"-"$1" -outfmt %f >> nhe_plus.fasta' 
+awk '{OFS="\t"}{print $2,$3,$9}' nhe_minus_2.csv | xargs -n 3 sh -c 'blastdbcmd -db bc_contigs.fasta -entry "$0" -range "$2"-"$1" -outfmt %f >> nhe_minus.fasta' 
+
+awk '{OFS="\t"}{print $2,$9,$13}' hbl_plus_3.csv | xargs -n 3 sh -c 'blastdbcmd -db bc_contigs.fasta -entry "$0" -range "$2"-"$1" -outfmt %f >> hbl_plus_3.fasta' 
+awk '{OFS="\t"}{print $2,$3,$9}' hbl_minus_2.csv | xargs -n 3 sh -c 'blastdbcmd -db bc_contigs.fasta -entry "$0" -range "$2"-"$1" -outfmt %f >> hbl_minus.fasta' 
+
+
+### Reverse complement sequences from - strands.
+
+export PATH=/programs/seqtk:$PATH
+
+seqtk seq -r /workdir/crp86/bc_genomes/nhe_minus.fasta > /workdir/crp86/bc_genomes/nhe_minus_R.fasta 
+seqtk seq -r /workdir/crp86/bc_genomes/hbl_minus.fasta > /workdir/crp86/bc_genomes/hbl_minus_R.fasta 
+
+
+### Save the + and - sequences to one file.
+
+cat hbl_plus.fasta hbl_minus_R.fasta > hbl_all_up.fasta
+cat nhe_plus.fasta nhe_minus_R.fasta > nhe_all_up.fasta

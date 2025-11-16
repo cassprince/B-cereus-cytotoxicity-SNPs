@@ -79,14 +79,15 @@ plt_box <- ggplot(data, aes(x=group, y=cytotoxicity))+
   scale_fill_manual(values = c("#e5c9ff", "gray", "gray", "#e5c9ff", "#e5c9ff","gray", "gray", "gray" ))+
   xlab("")+
   ylab("Normalized Cytotoxicity")+
-  theme(text = element_text(size = 15))+
-  theme(axis.text.x = element_text(size=15, angle=45, hjust = 1, vjust = 1))+
-  stat_summary(fun.data = nval, geom = "text", fun.y = median, 
-               position = position_dodge(width = 0.75)) 
+  theme(text = element_text(size = 20),
+        axis.text.x = element_text(angle=45, hjust = 1, vjust = 1))+
+  stat_summary(fun.data = nval, geom = "text", size = 6, fun.y = median, 
+               position = position_dodge(width = 0.75)) +
+  coord_cartesian(clip = "off")
 
 plt_box
 
-ggsave("C:\\Users\\cassp\\OneDrive\\Documents\\Kovac Lab\\Figures\\Biomarkers\\Cytotoxicity group violin plot 9_6_24.png", plot = plt_box, device = "png", width = 11, height = 6, dpi = 300)
+ggsave("C:\\Users\\cassp\\OneDrive\\Documents\\Kovac Lab\\Figures\\Biomarkers\\violin_10_6_25.png.png", plot = plt_box, device = "png", width = 11, height = 6, dpi = 300)
 
 
 ##Violin plot by species. Need to clean up species names to make it prettier.

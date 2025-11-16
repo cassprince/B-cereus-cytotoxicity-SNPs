@@ -4,7 +4,7 @@ library(tidyverse)
 library(readxl)
 library(grid)
 
-df = data.frame(read_csv("C:\\Users\\cassp\\OneDrive\\Documents\\Kovac Lab\\Biomarkers paper\\SNP hits\\4_21_25\\SNP_mastersheet_4_22_25.csv"))
+df = data.frame(read_csv("C:\\Users\\cassp\\OneDrive\\Documents\\Kovac Lab\\Biomarkers paper\\SNP hits\\4_21_25\\SNP_mastersheet_labels_4_22_25.csv"))
 df$diff = abs(df$Avg.Cytotoxicity.With - df$Avg.Cytotoxicity.Without)
 
 df_SNP = data.frame(read_excel("C:\\Users\\cassp\\OneDrive\\Documents\\Kovac Lab\\Biomarkers paper\\SNP hits\\Covars 8_14_23\\SNP_hits_sheet.xlsx"))
@@ -119,10 +119,32 @@ bar = ggplot(df, aes(x = label_tile, y = diff, fill = diff)) +
   theme_prism(axis_text_angle = 45)+
   theme(axis.text.y = element_text(angle = 90, vjust = 2, hjust=0.5),
         text = element_text(size = 18),
-        legend.position = "none")
+        legend.position = "none") 
+  
 bar
 
 ggsave("C:\\Users\\cassp\\OneDrive\\Documents\\Kovac Lab\\Figures\\Biomarkers\\bar_SNP_4_22_25.png", bar, width = 8, height = 4, units = "in")
+
+
+df_cyto = df_gene %>% 
+  rename(label_tile = Gene) %>% 
+  select(label_tile, diff) %>%
+  rbind(df %>% 
+          select(label_tile, diff))
+
+df_cyto$label_tile = with(df_cyto,factor(label_tile,levels = rev(unique(df_cyto$label_tile))))
+
+ggplot(df_cyto, aes(x = diff, y = label_tile, fill = diff)) + 
+  geom_col(color = "black") +
+  scale_fill_gradient(low="white", high="cornflowerblue") +
+  scale_x_continuous(limits = c(-0.5,0.5)) +
+  ylab("") +
+  theme_prism()+
+  theme(text = element_text(size = 18),
+        legend.position = "none") 
+
+ggsave("C:\\Users\\cassp\\OneDrive\\Documents\\Kovac Lab\\Figures\\Biomarkers\\bar_noit_SNP_11_14_25.png", width = 5, height = 8.75, units = "in")
+
 
 df_gene$Gene = with(df_gene,factor(Gene,levels = unique(df_gene$Gene)))
 
