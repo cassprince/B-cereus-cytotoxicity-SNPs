@@ -1,50 +1,201 @@
+##### ------ PREPARE GENOME DATABASE ------ ##### 
 
-### Reformat genome names.
+### Keep only genomes listed in "inc.txt".
 
-awk '/^>/{print ">" substr(FILENAME,1,length(FILENAME)-6) "_" ++i ; next} 1' *_contigs.fasta > bc_contigs.fasta
+sed -e 's/$/.fasta/' -i inc.txt
+xargs -a inc.txt mv -t paper
+
+### Reformat genome names and save to one file.
+
+awk '/^>/{print ">" substr(FILENAME,1,length(FILENAME)-6) "_" ++i ; next} 1' *.fasta > bc_contigs.fasta
 
 
-### Prepare genomes as BLAST database and run BLAST for the first genes in the nhe and hbl operons (nheA and hblC).
+### Prepare genomes as BLAST database.
 
 makeblastdb -in bc_contigs.fasta -dbtype nucl -parse_seqids 
-blastn -db bc_contigs.fasta -query nheA.fasta -max_target_seqs 10000 -perc_identity 60 -qcov_hsp_perc 70 -task blastn -outfmt 7 -out nhe_blast.csv 
-blastn -db bc_contigs.fasta -query hblC.fasta -max_target_seqs 10000 -perc_identity 60 -qcov_hsp_perc 70 -task blastn -outfmt 7 -out hbl_blast.csv 
 
+
+##### ------ EXTRACT UPSTREAM SEQUENCES ------ #####
+
+
+### Run BLAST for the first genes in the nhe and hbl operons (nheA and hblC).
+### nheA from NZ_JBJJSR010000001.1:1765215-1766375
+### hblC from NZ_JBJJSR010000001.1:3066802-3065483
+
+blastn -db bc_contigs.fasta -query nheA_query.fasta -max_target_seqs 10000 -perc_identity 60 -qcov_hsp_perc 70 -task megablast -outfmt 7 -out nheA_blast.csv 
+blastn -db bc_contigs.fasta -query hblC_query.fasta -max_target_seqs 10000 -perc_identity 60 -qcov_hsp_perc 70 -task megablast -outfmt 7 -out hblC_blast.csv 
+blastn -db bc_contigs.fasta -query cytK2_query.fasta -max_target_seqs 10000 -perc_identity 60 -qcov_hsp_perc 70 -task megablast -outfmt 7 -out cytK2_blast.csv
+blastn -db bc_contigs.fasta -query cytK1_query.fasta -max_target_seqs 10000 -perc_identity 60 -qcov_hsp_perc 70 -task megablast -outfmt 7 -out cytK1_blast.csv
 
 ### Separate genomes with enterotoxin genes on the + and - strands for sequence extraction.
 
-awk -F'\t' -v OFS='\t' '$9 - $10 > 0' nhe_blast.csv > nhe_minus.csv
-awk -F'\t' -v OFS='\t' '$9 - $10 < 0' nhe_blast.csv > nhe_plus.csv
+awk -F'\t' -v OFS='\t' '$9 - $10 > 0' nheA_blast.csv > nheA_minus.csv
+awk -F'\t' -v OFS='\t' '$9 - $10 < 0' nheA_blast.csv > nheA_plus.csv
 
-awk -F'\t' -v OFS='\t' '$9 - $10 > 0' hbl_blast.csv > hbl_minus.csv
-awk -F'\t' -v OFS='\t' '$9 - $10 < 0' hbl_blast.csv > hbl_plus.csv
+awk -F'\t' -v OFS='\t' '$9 - $10 > 0' hblC_blast.csv > hblC_minus.csv
+awk -F'\t' -v OFS='\t' '$9 - $10 < 0' hblC_blast.csv > hblC_plus.csv
+
+awk -F'\t' -v OFS='\t' '$9 - $10 > 0' cytK2_blast.csv > cytK2_minus.csv
+awk -F'\t' -v OFS='\t' '$9 - $10 < 0' cytK2_blast.csv > cytK2_plus.csv
+
+awk -F'\t' -v OFS='\t' '$9 - $10 > 0' cytK1_blast.csv > cytK1_minus.csv
+awk -F'\t' -v OFS='\t' '$9 - $10 < 0' cytK1_blast.csv > cytK1_plus.csv
+
+### Calculate 600, 1500, or 150 bp upstream of the BLAST start location and save to column 9. If the value is negative because the end of a contig is reached, set number to "1".
+
+awk -F'\t' -v OFS='\t' '{new_val=($9-600) < 1 ? 1 :($9-600); print $0, new_val}' nheA_plus.csv > nheA_plus_2.csv
+awk -F'\t' -v OFS='\t' '{$3 = $9 "\t" $3; $3=($3+600); print }' nheA_minus.csv > nheA_minus_2.csv
+
+awk -F'\t' -v OFS='\t' '{new_val=($9-1500) < 1 ? 1 :($9-1500); print $0, new_val}' hblC_plus.csv > hblC_plus_2.csv
+awk -F'\t' -v OFS='\t' '{$3 = $9 "\t" $3; $3=($3+1500); print }' hblC_minus.csv > hblC_minus_2.csv
+
+awk -F'\t' -v OFS='\t' '{new_val=($9-150) < 1 ? 1 :($9-150); print $0, new_val}' cytK2_plus.csv > cytK2_up_plus_2.csv
+awk -F'\t' -v OFS='\t' '{$3 = $9 "\t" $3; $3=($3+150); print }' cytK2_minus.csv > cytK2_up_minus_2.csv
+
+awk -F'\t' -v OFS='\t' '{new_val=($9-150) < 1 ? 1 :($9-150); print $0, new_val}' cytK1_plus.csv > cytK1_up_plus_2.csv
+awk -F'\t' -v OFS='\t' '{$3 = $9 "\t" $3; $3=($3+150); print }' cytK1_minus.csv > cytK1_up_minus_2.csv
 
 
-### Calculate 500 bp upstream of the BLAST start location and save to column 9. If the value is negative because the end of a contig is reached, set number to "1".
-awk -F'\t' -v OFS='\t' '{new_val=($9-500) < 1 ? 1 :($9-500); print $0, new_val}' nhe_plus.csv > nhe_plus_2.csv
-awk -F'\t' -v OFS='\t' '{$3 = $9 "\t" $3; $3=($3+500); print }' nhe_minus.csv > nhe_minus_2.csv
+### Extract sequences 600, 1500, or 150 bp upstream of nheA, hblC, cytK respectively from BLAST start location.
 
-awk -F'\t' -v OFS='\t' '{new_val=($9-500) < 1 ? 1 :($9-500); print $0, new_val}' hbl_plus.csv > hbl_plus_3.csv
-awk -F'\t' -v OFS='\t' '{$3 = $9 "\t" $3; $3=($3+500); print }' hbl_minus.csv > hbl_minus_2.csv
+awk '{OFS="\t"}{print $2,$9,$13}' nheA_plus_2.csv | xargs -n 3 sh -c 'blastdbcmd -db /workdir/crp86/paper/bc_contigs.fasta -entry "$0" -range "$2"-"$1" -outfmt %f >> nheA_up_plus.fasta' 
+awk '{OFS="\t"}{print $2,$3,$9}' nheA_minus_2.csv | xargs -n 3 sh -c 'blastdbcmd -db /workdir/crp86/paper/bc_contigs.fasta -entry "$0" -range "$2"-"$1" -outfmt %f >> nheA_up_minus.fasta' 
 
+awk '{OFS="\t"}{print $2,$9,$13}' hblC_plus_2.csv | xargs -n 3 sh -c 'blastdbcmd -db /workdir/crp86/paper/bc_contigs.fasta -entry "$0" -range "$2"-"$1" -outfmt %f >> hblC_up_plus.fasta' 
+awk '{OFS="\t"}{print $2,$3,$9}' hblC_minus_2.csv | xargs -n 3 sh -c 'blastdbcmd -db /workdir/crp86/paper/bc_contigs.fasta -entry "$0" -range "$2"-"$1" -outfmt %f >> hblC_up_minus.fasta' 
 
-### Extract sequences 500 bp upstream of nheA and hblC from BLAST start location.
-awk '{OFS="\t"}{print $2,$9,$13}' nhe_plus_2.csv | xargs -n 3 sh -c 'blastdbcmd -db bc_contigs.fasta -entry "$0" -range "$2"-"$1" -outfmt %f >> nhe_plus.fasta' 
-awk '{OFS="\t"}{print $2,$3,$9}' nhe_minus_2.csv | xargs -n 3 sh -c 'blastdbcmd -db bc_contigs.fasta -entry "$0" -range "$2"-"$1" -outfmt %f >> nhe_minus.fasta' 
+awk '{OFS="\t"}{print $2,$9,$13}' cytK2_up_plus_2.csv | xargs -n 3 sh -c 'blastdbcmd -db /workdir/crp86/paper/bc_contigs.fasta -entry "$0" -range "$2"-"$1" -outfmt %f >> cytK2_up_plus.fasta' 
+awk '{OFS="\t"}{print $2,$3,$9}' cytK2_up_minus_2.csv | xargs -n 3 sh -c 'blastdbcmd -db /workdir/crp86/paper/bc_contigs.fasta -entry "$0" -range "$2"-"$1" -outfmt %f >> cytK2_up_minus.fasta' 
 
-awk '{OFS="\t"}{print $2,$9,$13}' hbl_plus_3.csv | xargs -n 3 sh -c 'blastdbcmd -db bc_contigs.fasta -entry "$0" -range "$2"-"$1" -outfmt %f >> hbl_plus_3.fasta' 
-awk '{OFS="\t"}{print $2,$3,$9}' hbl_minus_2.csv | xargs -n 3 sh -c 'blastdbcmd -db bc_contigs.fasta -entry "$0" -range "$2"-"$1" -outfmt %f >> hbl_minus.fasta' 
+awk '{OFS="\t"}{print $2,$9,$13}' cytK1_up_plus_2.csv | xargs -n 3 sh -c 'blastdbcmd -db /workdir/crp86/paper/bc_contigs.fasta -entry "$0" -range "$2"-"$1" -outfmt %f >> cytK1_up_plus.fasta' 
+awk '{OFS="\t"}{print $2,$3,$9}' cytK1_up_minus_2.csv | xargs -n 3 sh -c 'blastdbcmd -db /workdir/crp86/paper/bc_contigs.fasta -entry "$0" -range "$2"-"$1" -outfmt %f >> cytK1_up_minus.fasta' 
 
 
 ### Reverse complement sequences from - strands.
 
 export PATH=/programs/seqtk:$PATH
 
-seqtk seq -r /workdir/crp86/bc_genomes/nhe_minus.fasta > /workdir/crp86/bc_genomes/nhe_minus_R.fasta 
-seqtk seq -r /workdir/crp86/bc_genomes/hbl_minus.fasta > /workdir/crp86/bc_genomes/hbl_minus_R.fasta 
-
+seqtk seq -r /workdir/crp86/paper/blast_3_3_26/nheA_minus.fasta > nheA_minus_R.fasta 
+seqtk seq -r /workdir/crp86/paper/blast_3_3_26/hblC_minus.fasta > hblC_minus_R.fasta 
+seqtk seq -r /workdir/crp86/paper/blast_3_3_26/cytK2_up_minus.fasta > cytK2_up_minus_R.fasta 
+seqtk seq -r /workdir/crp86/paper/blast_3_3_26/cytK1_up_minus.fasta > cytK1_up_minus_R.fasta 
 
 ### Save the + and - sequences to one file.
 
-cat hbl_plus.fasta hbl_minus_R.fasta > hbl_all_up.fasta
-cat nhe_plus.fasta nhe_minus_R.fasta > nhe_all_up.fasta
+cat nheA_up_plus.fasta nheA_up_minus_R.fasta > nheA_up_all.fasta
+cat hblC_up_plus.fasta hblC_up_minus_R.fasta > hblC_up_all.fasta
+cat cytK1_up_plus.fasta cytK1_up_minus_R.fasta > cytK1_up_all.fasta
+cat cytK2_up_plus.fasta cytK2_up_minus_R.fasta > cytK2_up_all.fasta
+
+
+##### ------ EXTRACT GENE SEQUENCES ------ #####
+
+### nheB from NZ_JBJJSR010000001.1:1766413-1767621
+### nheC from NZ_JBJJSR010000001.1:1767729-1768808
+### hblD from NZ_JBJJSR010000001.1:3065421-3064201
+
+### cytK-1 from NC_009674.1:956141-957151
+### cytK-2 from NZ_JBJJSR010000001.1:1091165-1092175
+
+#!/bin/bash
+
+export PATH=/programs/seqtk:$PATH
+
+for file in *_query.fasta; do
+        prefix="${file%%_*}"
+        echo $prefix
+        blastn -db /workdir/crp86/paper/bc_contigs.fasta -query $file -max_target_seqs 10000 -perc_identity 60 -qcov_hsp_perc 70 -task megablast -outfmt 7 -out ${prefix}_blast.csv
+        echo ${prefix}_blast.csv
+        head ${prefix}_blast.csv
+	
+	awk -F'\t' -v OFS='\t' '$9 - $10 < 0' ${prefix}_blast.csv > ${prefix}_blast_plus.csv
+	awk -F'\t' -v OFS='\t' '$9 - $10 > 0' ${prefix}_blast.csv > ${prefix}_blast_minus.csv
+
+	awk '{OFS="\t"}{print $2,$9,$10}' ${prefix}_blast_plus.csv | xargs -n 3 sh -c 'blastdbcmd -db /workdir/crp86/paper/bc_contigs.fasta -entry "$0" -range "$1"-"$2" -outfmt %f >> "'"${prefix}_plus.fasta"'"'
+	awk '{OFS="\t"}{print $2,$9,$10}' ${prefix}_blast_minus.csv | xargs -n 3 sh -c 'blastdbcmd -db /workdir/crp86/paper/bc_contigs.fasta -entry "$0" -range "$2"-"$1" -outfmt %f >> "'"${prefix}_minus.fasta"'"'
+	seqtk seq -r /workdir/crp86/paper/blast_3_3_26/${prefix}_minus.fasta > ${prefix}_minus_R.fasta 
+	cat ${prefix}_plus.fasta  ${prefix}_minus_R.fasta  > ${prefix}_all.fasta 
+	head ${prefix}_all.fasta 
+
+done
+
+
+#### Run hblA and hblB separately!! It overwhelms the code if you don't
+
+# hblA:
+# NZ_JBJJSR010000001.1:c3064164-3063037 Bacillus cereus ATCC 14579 strain P1
+# NZ_CP035997.1:359987-358854 Bacillus mycoides strain BPN36/3 chromosome, complete genome
+# NZ_CP032365.1:2313330-2314457 Bacillus wiedmannii strain SR52 chromosome, complete genome
+# NZ_CP064875.1:2283760-2284887 Bacillus toyonensis strain P18 chromosome, complete genome
+
+# hblB:
+# NZ_JBJJSR010000001.1:c3062661-3061261 Bacillus cereus ATCC 14579 strain P1
+# NZ_CP032365.1:2314783-2316180 Bacillus wiedmannii strain SR52 chromosome, complete genome
+# NZ_CP064875.1:2285213-2286610 Bacillus toyonensis strain P18 chromosome, complete genome
+
+
+
+blastn -db /workdir/crp86/paper/bc_contigs.fasta -query hblA_query.fasta -max_target_seqs 10000 -perc_identity 80 -qcov_hsp_perc 70 -task megablast -outfmt 7 -out hblA_mult_megablast.csv
+blastn -db /workdir/crp86/paper/bc_contigs.fasta -query hblB_query.fasta -max_target_seqs 10000 -perc_identity 80 -qcov_hsp_perc 70 -task megablast -outfmt 7 -out hblB_mult_megablast.csv
+
+
+# ... plug into r ...
+
+awk -F'\t' -v OFS='\t' '$10 - $11 < 0' df_hblA_filt_030526.tsv > hblA_blast_plus.csv
+awk -F'\t' -v OFS='\t' '$10 - $11 > 0' df_hblA_filt_030526.tsv > hblA_blast_minus.csv
+
+awk '{OFS="\t"}{print $14,$10,$11}' hblA_blast_plus.csv | xargs -n 3 sh -c 'blastdbcmd -db /workdir/crp86/paper/bc_contigs.fasta -entry "$0" -range "$1"-"$2" -outfmt %f >> hblA_plus.fasta'
+awk '{OFS="\t"}{print $14,$10,$11}' hblA_blast_minus.csv | xargs -n 3 sh -c 'blastdbcmd -db /workdir/crp86/paper/bc_contigs.fasta -entry "$0" -range "$2"-"$1" -outfmt %f >> hblA_minus.fasta'
+
+seqtk
+
+cat hblA_plus.fasta hbA_minus_R.fasta > hblA_all.fasta
+
+
+
+awk -F'\t' -v OFS='\t' '$10 - $11 < 0' df_hblB_filt_030526.tsv > hblB_blast_plus.csv
+awk -F'\t' -v OFS='\t' '$10 - $11 > 0' df_hblB_filt_030526.tsv > hblB_blast_minus.csv
+
+awk '{OFS="\t"}{print $14,$10,$11}' hblB_blast_plus.csv | xargs -n 3 sh -c 'blastdbcmd -db /workdir/crp86/paper/bc_contigs.fasta -entry "$0" -range "$1"-"$2" -outfmt %f >> hblB_plus.fasta'
+awk '{OFS="\t"}{print $14,$10,$11}' hblB_blast_minus.csv | xargs -n 3 sh -c 'blastdbcmd -db /workdir/crp86/paper/bc_contigs.fasta -entry "$0" -range "$2"-"$1" -outfmt %f >> hblB_minus.fasta'
+
+seqtk
+
+cat hblB_plus.fasta hblB_minus_R.fasta > hblB_all.fasta
+
+
+
+
+
+### have to manually cat 
+
+
+
+########### 3/3/26 notes
+- uploaded the contigs database to biohpc.
+- ran blast as written above for all queries. need to extract upstream seqs still
+- a bit concerned with the lack of hblC seqs... shouldn't be a % id cutoff problem based on my blast web search. the numbers are similar to 
+- manually look at join_DC from r script.... but first run new blast results through r script to double check i have all the queries correctly labeled. i think im picking up other proteins in the hbl operon with hblD sometimes, so i may need to check for overlap with the other hbl queries for hblD too.
+
+- get lengths of all contigs to see if genes are on assembly singletons, then i can decide what i want to do with the data better. do i keep only seqs with the operon on the same contig?
+
+export PATH=/programs/seqkit-0.15.0:$PATH
+
+seqkit fx2tab -nl bc_contigs.fasta > contig_lengths.txt
+
+
+
+- want to adjust script to also extract *** bp after hblA and hblB to look at term seqs??
+
+######## 3/5/26 notes
+
+-downloaded all upstream and gene sequences!
+-think about what i want to change about the rest of my pipeline (if anything), maybe automate whether the snp is nonsynon or not?
+
+
+
+# To save only plasmid contigs from plasmid_contigs.txt:
+
+seqkit grep -f plasmid_contigs.txt bc_contigs_nano.fasta > plasmid_contigs.fasta
+
+
