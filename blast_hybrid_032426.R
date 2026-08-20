@@ -3,7 +3,7 @@ library(readxl)
 library(ivs)
 library(ggbreak)
 
-
+# Load in data from BLAST runs.
 setwd("C:/Users/cassp/OneDrive/Documents/Kovac Lab/Biomarkers paper/genes_nano_031826")
 
 columns = c("query", "acc", "perc_id", "ali_len", "mismatches", "gap_opens", "q_start", "q_end", "s_start", "s_end", "eval", "score")
