@@ -1,19 +1,19 @@
 library(tidyverse)
 
-setwd("C:/Users/cassp/OneDrive/Documents/GitHub/B-cereus-cytotoxicity-SNPs/blast_results")
+setwd("C:/Users/cassp/OneDrive/Documents/GitHub/B-cereus-cytotoxicity-SNPs/blast_results/unfiltered_megablast_qc50_090126")
 
 # Get list of files in directory
-files = list.files(path="C:/Users/cassp/OneDrive/Documents/GitHub/B-cereus-cytotoxicity-SNPs/blast_results", pattern="*.csv", full.names=FALSE, recursive=FALSE)
+files = list.files(path="C:/Users/cassp/OneDrive/Documents/GitHub/B-cereus-cytotoxicity-SNPs/blast_results/unfiltered_megablast_qc50_090126", pattern="*.csv", full.names=FALSE, recursive=FALSE)
 
 # Loop through each file in directory 
 lapply(files, function(x) {
 
-  # Read in BLAST output. Filter hits with > 85% percent identity to the queries. 
+  # Read in BLAST output. Filter hits with > 80% percent identity to the queries. 
   columns = c("query", "acc", "perc_id", "ali_len", "mismatches", "gap_opens", "q_start", "q_end", "s_start", "s_end", "eval", "score")
   df = read_tsv(x, skip = 5, col_names = columns) %>%
     separate(acc, c("acc", "contig"), "_") %>%
     drop_na() %>%
-    filter(perc_id > 85) %>%
+    filter(perc_id > 80) %>%
     mutate(full_name = paste0(acc, "_", contig))%>%
     mutate(start = ifelse(s_start < s_end, s_start,s_end)) %>%
     mutate(stop = ifelse(s_start > s_end, s_start,s_end)) 
@@ -80,7 +80,8 @@ lapply(files, function(x) {
   
   df_final = rbind(df_no_overlap, df_top_hits) # Concatenate all hits.
   name_short = gsub(".csv", "", x)
+  print(name_short)
   final_name = paste0(name_short, "_filt.csv")
   
-  write_csv(df_final, paste0("C:/Users/cassp/OneDrive/Documents/GitHub/B-cereus-cytotoxicity-SNPs/blast_results/filtered/attempt_082726/", final_name)) # Write filtered data as .csv.
+  write_csv(df_final, paste0("C:/Users/cassp/OneDrive/Documents/GitHub/B-cereus-cytotoxicity-SNPs/blast_results/filtered_megablast_qc50_090126/", final_name)) # Write filtered data as .csv.
 })

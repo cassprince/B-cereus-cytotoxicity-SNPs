@@ -5,7 +5,7 @@ library(ggridges)
 library(Biostrings)
 library(msa)
 
-setwd("C:/Users/cassp/OneDrive/Documents/GitHub/B-cereus-cytotoxicity-SNPs/blast_results/filtered")
+setwd("C:/Users/cassp/OneDrive/Documents/GitHub/B-cereus-cytotoxicity-SNPs/blast_results/filtered/attempt_082726")
 
 #lengths = read_tsv("contigs_lengths.txt", col_names = c("acc", "contig_length")) %>%
   #separate(acc, c("acc", "contig"), "_")
@@ -32,19 +32,29 @@ df_nheC = read_csv("nheC_blast_filt.csv")
 
 df = data.frame(read_excel("../../Mastersheet_082026.xlsx")) 
 
-%>%
-  select(acc = Isolate, cytotoxicity = Cytotoxicity....0.7.is.cytotoxic., panC_group = Adjusted_panC_Group.predicted_species.)
+#%>%
+  #select(acc = Isolate, cytotoxicity = Cytotoxicity....0.7.is.cytotoxic., panC_group = Adjusted_panC_Group.predicted_species.)
 
 
 
-sum(grepl("nheA", df$diarrheal_toxin_Nhe.genes.))
-sum(grepl("nheB", df$diarrheal_toxin_Nhe.genes.))
-sum(grepl("nheC", df$diarrheal_toxin_Nhe.genes.))
+nheA_shared = df %>% 
+  filter(grepl("nheA", df$diarrheal_toxin_Nhe.genes.)) %>% 
+  full_join(df_nheA, by = join_by(Isolate == acc))
+nheB_shared = df %>% 
+  filter(grepl("nheB", df$diarrheal_toxin_Nhe.genes.)) %>% 
+  full_join(df_nheB, by = join_by(Isolate == acc))
+nheC_shared = df %>% 
+  filter(grepl("nheC", df$diarrheal_toxin_Nhe.genes.)) %>% 
+  full_join(df_nheC, by = join_by(Isolate == acc))
 
 sum(grepl("cytK-1", df$diarrheal_toxin_CytK.top_hit.))
 sum(grepl("cytK-2", df$diarrheal_toxin_CytK.top_hit.))
 
+files = list.files(path="C:/Users/cassp/OneDrive - Cornell University/Biomarkers paper/genomes_08_20_26", full.names=FALSE, recursive=FALSE)
 
+files_notdf = anti_join(data.frame(gsub(".fasta", "", files)), df, by = join_by(gsub...fasta.......files. == Isolate))
+
+df_notfiles = anti_join(df, data.frame(gsub(".fasta", "", files)), by = join_by(Isolate == gsub...fasta.......files.))
 
 # Distinguish whether a shared gene hit is more like hblA or hblB and label it as such.
 

@@ -1,0 +1,70 @@
+library(tidyverse)
+library(readxl)
+
+setwd("C:/Users/cassp/OneDrive/Documents/GitHub/B-cereus-cytotoxicity-SNPs/data")
+
+files = list.files(path="C:/Users/cassp/OneDrive/Documents/GitHub/B-cereus-cytotoxicity-SNPs/data", pattern="*.csv", full.names=FALSE, recursive=FALSE)
+
+files_lr_filt = files[grepl("prot_logreg",files)]
+files_lr_unfilt = files[grepl("unfilt_logreg",files)]
+files_snps = files[grepl("prot_snps",files)]
+
+metadata = data.frame(read_excel("C:/Users/cassp/OneDrive - Cornell University/Biomarkers paper/Mastersheet_082026.xlsx")) %>%
+  select(Isolate, cytotoxicity = Cytotoxicity....0.7.is.cytotoxic., panC_group = Adjusted_panC_Group.predicted_species.) %>%
+  mutate(panC_group = gsub("\\s*\\([^\\)]+\\)","",panC_group)) %>%
+  mutate(panC_group = gsub("\\*", "", panC_group))
+
+df_lr_filt = data.frame()  
+for (x in files_lr_filt) {
+  df_lr_filt = df_lr_filt %>%
+    rbind(read_csv(x))
+}
+
+df_lr_unfilt = data.frame()  
+for (x in files_lr_unfilt) {
+  df_lr_unfilt = df_lr_unfilt %>%
+    rbind(read_csv(x))
+}
+
+
+for (i in files_snps){  
+  name = paste0(gsub("_snps_092326.csv","",i), "_snps")  
+  assign(name, read.csv(i, header=TRUE))
+}
+
+df_lr_one_filt = df_lr_filt %>%
+  arrange(`lr_p-val_tox_bonf`) %>%
+  distinct(gene, position, .keep_all = TRUE)
+
+df_lr_one_filt %>% 
+  group_by(gene) %>%
+  summarize(n = n())
+
+ggplot(df_lr_one_filt, aes(x = -log10(`lr_p-val_tox_bonf`), fill = gene)) +
+  geom_histogram()
+
+
+df_lr_one_unfilt = df_lr_unfilt %>%
+  arrange(`lr_p-val_tox_bonf`) %>%
+  distinct(gene, position, .keep_all = TRUE)
+
+level_order = c("nheA", "nheB", "nheC", "hblC", "hblD", "hblA", "hblB", "cytK1", "cytK2")
+
+df_lr_one_unfilt %>%
+  mutate(phylo_signif = `lr_p-val_phylo_bonf`< 0.05) %>%
+  mutate(tox_diff = abs(avg_tox_w - avg_tox_wo)) %>%
+  filter(grepl("prot", name)) %>%
+  mutate(gene = gsub("_prot", "", gene)) %>%
+  ggplot(aes(x = position, y = -log10(`lr_p-val_tox`))) +
+  geom_hline(yintercept = 1.3, color = "gray70", linetype = 2) +
+  geom_hline(yintercept = -log10(0.05/dim(df_lr_unfilt)[1]), color = "gray30", linetype = 1) +
+  geom_point(aes(color = tox_diff, shape = phylo_signif,)) +
+  theme_classic() +
+  labs(x = "Position", y = "-log10(p-value)") +
+  theme(
+        axis.text.x = element_blank()
+  ) +
+  scale_y_continuous(expand = c(0,0), n.breaks = 7, limits = c(0,15)) +
+  scale_color_gradient(name = "difference in \nmean cytotoxicity", low = "gray90", high = "darkblue") +
+  scale_shape_manual(name = "significantly correlated\nwith panC group?", values = c(16, 17)) +
+  facet_wrap(~factor(gene, levels = level_order), nrow = 1, scales = "free_x") 

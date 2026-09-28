@@ -13,8 +13,6 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from Bio import pairwise2
 
-
-
 def find_orf(seq, table):
     lengths = []
     for frame in range(3):

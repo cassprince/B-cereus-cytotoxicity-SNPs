@@ -1,11 +1,11 @@
 library(tidyverse)
 
-setwd("C:/Users/cassp/OneDrive/Documents/GitHub/B-cereus-cytotoxicity-SNPs/blast_results/filtered")
+setwd("C:/Users/cassp/OneDrive/Documents/GitHub/B-cereus-cytotoxicity-SNPs/blast_results/filtered_megablast_qc50_090126")
 
-df_hblB = read_csv("hblB_blast_filt.csv") %>%
+df_hblB = read_csv("hblB_blast_090126_filt.csv") %>%
   mutate(gene = "hblB")
 
-df_hblA = read_csv("hblA_blast_filt.csv") %>%
+df_hblA = read_csv("hblA_blast_090126_filt.csv") %>%
   mutate(gene = "hblA")
 
 df_arranged = rbind(df_hblA, df_hblB) %>%
@@ -74,3 +74,7 @@ df_hblB_final %>%
 df_hblA_final %>%
   group_by(acc) %>%
   filter(n() >1)
+
+
+write_csv(df_hblA_final, "hblA_parsed_090126.csv")
+write_csv(df_hblB_final, "hblB_parsed_090126.csv")

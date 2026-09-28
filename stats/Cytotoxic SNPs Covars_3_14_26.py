@@ -19,10 +19,10 @@ import statsmodels.api as sm
 import os
 
 #Set working directiory and load in alignment and data.
-os.chdir(r'C:\Users\cassp\OneDrive\Documents\Kovac Lab\Biomarkers paper\genes_030326\fastas')
+os.chdir(r'C:\Users\cassp\OneDrive\Documents\GitHub\B-cereus-cytotoxicity-SNPs\blast_results\filtered_megablast_qc50_090126\alignments')
 
-file = 'nheC_all.fasta'
-mSheet = pd.read_csv(r"C:\Users\cassp\OneDrive\Documents\Kovac Lab\Biomarkers paper\df_all_genes_030526.csv") #import file with cytotoxicity data (same order as fasta)
+file = 'nheC_all_align.fasta'
+mSheet = pd.read_excel(r"C:\Users\cassp\OneDrive - Cornell University\Biomarkers paper\Mastersheet_082026.xlsx") #import file with cytotoxicity data (same order as fasta)
 
 mSheet['panC_group'] = mSheet['panC_group'].replace({'Group_clarus' : 0, 'Group_I(pseudomycoides)' : 1, 'Group_II(mosaicus/luti)': 2, 'Group_III(mosaicus)': 3, 'Group_IV(cereus_sensu_stricto)': 4, 'Group_V(toyonensis)': 5, 'Group_VI(mycoides/paramycoides)': 6, 'Group_VII(cytotoxicus)' : 7, 'Group_VIII(mycoides)' : 8})
 

@@ -1,23 +1,20 @@
 library(tidyverse)
 
-setwd("C:/Users/cassp/OneDrive/Documents/GitHub/B-cereus-cytotoxicity-SNPs/blast_results")
+setwd("C:/Users/cassp/OneDrive/Documents/GitHub/B-cereus-cytotoxicity-SNPs/blast_results/unfiltered_megablast_qc50_090126")
 
-# Get list of files in directory
-files = list.files(path="C:/Users/cassp/OneDrive/Documents/GitHub/B-cereus-cytotoxicity-SNPs/blast_results", pattern="*.csv", full.names=FALSE, recursive=FALSE)
+x = "cytK2_blast_090126.csv"
 
-x = "nheA_blast.csv"
-
-  # Read in BLAST output. Filter hits with > 85% percent identity to the queries. 
-  columns = c("query", "acc", "perc_id", "ali_len", "mismatches", "gap_opens", "q_start", "q_end", "s_start", "s_end", "eval", "score")
-  df = read_tsv(x, skip = 5, col_names = columns) %>%
-    separate(acc, c("acc", "contig"), "_") %>%
-    drop_na() %>%
-    filter(perc_id > 85) %>%
-    mutate(full_name = paste0(acc, "_", contig))%>%
-    mutate(start = ifelse(s_start < s_end, s_start,s_end)) %>%
-    mutate(stop = ifelse(s_start > s_end, s_start,s_end)) 
-  # Group the BLAST data by isolate name + contig (aka "full_name"). Arrange each group by the "start" of each hit (ascending). 
-  # The "start" here is not necessarily the start codon of the gene. Just the lower number between s_start and s_end in the BLAST data.
+# Read in BLAST output. Filter hits with > 85% percent identity to the queries. 
+columns = c("query", "acc", "perc_id", "ali_len", "mismatches", "gap_opens", "q_start", "q_end", "s_start", "s_end", "eval", "score")
+df = read_tsv(x, skip = 5, col_names = columns) %>%
+  separate(acc, c("acc", "contig"), "_") %>%
+  drop_na() %>%
+  filter(perc_id > 85) %>%
+  mutate(full_name = paste0(acc, "_", contig))%>%
+  mutate(start = ifelse(s_start < s_end, s_start,s_end)) %>%
+  mutate(stop = ifelse(s_start > s_end, s_start,s_end)) 
+# Group the BLAST data by isolate name + contig (aka "full_name"). Arrange each group by the "start" of each hit (ascending). 
+# The "start" here is not necessarily the start codon of the gene. Just the lower number between s_start and s_end in the BLAST data.
 df_full = df %>%
     group_by(full_name) %>%
     arrange(start, .by_group = TRUE) %>%
@@ -76,3 +73,6 @@ for (df_test in df_full){
 }
   
 df_final = rbind(df_no_overlap, df_top_hits) # Concatenate all hits.
+
+write_csv(df_final, "C:/Users/cassp/OneDrive/Documents/GitHub/B-cereus-cytotoxicity-SNPs/blast_results/filtered_megablast_qc50_090126/cytK2_blast_090126_filt.csv")
+
