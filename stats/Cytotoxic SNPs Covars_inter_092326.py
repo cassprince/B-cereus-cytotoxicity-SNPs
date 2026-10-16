@@ -38,6 +38,8 @@ def modelTox(nTP, cutoff1, cutoff2):
             testLR = testLR[['cytotoxicity', 'panC_group']]
             testLR = testLR.reset_index(drop=True)
             
+            print(position)
+            print(testY)
             log_reg = sm.Logit(testY, testLR).fit(disp=0) #Fit the logistic regression model.
     
             #Record general data.
@@ -74,7 +76,7 @@ def modelTox(nTP, cutoff1, cutoff2):
 
 
 #Set working directiory and load in alignment and data.
-os.chdir(r'C:\Users\cassp\OneDrive\Documents\GitHub\B-cereus-cytotoxicity-SNPs\blast_results\filtered_megablast_qc50_090126\alignments\protein')
+os.chdir(r'C:\Users\cassp\OneDrive\Documents\GitHub\B-cereus-cytotoxicity-SNPs\blast_results\filtered_megablast_qc50_090126\alignments\upstream\hblC_variants')
 
 mSheet = pd.read_excel(r"C:\Users\cassp\OneDrive - Cornell University\Biomarkers paper\Mastersheet_082026.xlsx") #import file with cytotoxicity data (same order as fasta)
 
@@ -95,7 +97,7 @@ mSheet['cytotoxicity'] = mSheet['Cytotoxicity ( >0.7 is cytotoxic)']
 metadata = mSheet.loc[:, ["Isolate", "cytotoxicity", "panC_group"]]
 nucleotides = ["A", "T", "G", "C"]
 proteins = ["A", "R", "D", "N", "C", "E", "Q", "G", "H", "I", "L", "K", "M", "F", "P", "S", "T", "W", "Y", "V"]
-file_dir = Path("C:/Users/cassp/OneDrive/Documents/GitHub/B-cereus-cytotoxicity-SNPs/blast_results/filtered_megablast_qc50_090126/alignments/protein")
+file_dir = Path("C:/Users/cassp/OneDrive/Documents/GitHub/B-cereus-cytotoxicity-SNPs/blast_results/filtered_megablast_qc50_090126/alignments/upstream/hblC_variants")
 
 for file in file_dir.glob("*.fasta"):
     fileName = str(file).split('\\')[-1]
@@ -124,8 +126,8 @@ for file in file_dir.glob("*.fasta"):
     
     df_full = pd.DataFrame(0, index = range(0), columns = ["gene", "position", "nuc","name", "total_w", "total_wo", "avg_tox_w", "avg_tox_wo", "sd_tox_w", "sd_tox_wo", "lr_p-val_tox", "lr_p-val_phylo"])
     
-    cutoff1 = 0.95
-    cutoff2 = 0.05
+    cutoff1 = 0.80
+    cutoff2 = 0.20
     
     # Run the model on each nucleotide or amino acid. Append data for each nucleotide to same dataframe (df_full). 
     if "prot" in fileName:
