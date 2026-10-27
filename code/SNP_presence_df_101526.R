@@ -7,7 +7,7 @@ files = list.files(path="C:/Users/princecr/Documents/GitHub/B-cereus-cytotoxicit
 files_snps = files[grepl("unfilt_snps",files)]
 
 df_SNPs = read_csv("C:/Users/princecr/Documents/GitHub/B-cereus-cytotoxicity-SNPs/data/full_SNP_set_101526.csv") %>%
-  filter(top_SNP == TRUE)
+  filter(tox_signif == TRUE)
 
 metadata = read_csv("C:/Users/princecr/Documents/GitHub/B-cereus-cytotoxicity-SNPs/Mastersheet_082026.csv") %>%
   select(Isolate, cytotoxicity = "Cytotoxicity ( >0.7 is cytotoxic)", panC_group = "Adjusted_panC_Group(predicted_species)") %>%
@@ -42,14 +42,14 @@ for (i in files_snps){
 # In file below, NA = the genome doesn't have the gene with that SNP, 0 = the gene is present but none of the genes have the SNP, 1 = one gene in the genome has the SNP, 2 = two genes have the SNP, etc. 
 df %>%
   relocate(Isolate, cytotoxicity, panC_group) %>%
-  write_csv("C:/Users/princecr/Documents/GitHub/B-cereus-cytotoxicity-SNPs/data/snps_summed_101626.csv")
+  write_csv("C:/Users/princecr/Documents/GitHub/B-cereus-cytotoxicity-SNPs/data/snps_all_signif_summed_102126.csv")
 
 # In file below, NA = the genome doesn't have the gene with that SNP, 0 = the gene is present but none of the genes have the SNP, 1 = AT LEAST ONE gene in the genome has the SNP.
 df %>%
   relocate(Isolate, cytotoxicity, panC_group) %>%
   mutate(across(colnames(.)[4]:colnames(.)[length(.)], ~ gsub(2, 1, .))) %>%
   mutate(across(colnames(.)[4]:colnames(.)[length(.)], ~ gsub(3, 1, .))) %>%
-  write_csv("C:/Users/princecr/Documents/GitHub/B-cereus-cytotoxicity-SNPs/data/snps_pres_abs_101626.csv")
+  write_csv("C:/Users/princecr/Documents/GitHub/B-cereus-cytotoxicity-SNPs/data/snps_all_signif_pres_abs_102126.csv")
 
 
 
