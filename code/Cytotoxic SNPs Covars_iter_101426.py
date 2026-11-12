@@ -22,6 +22,8 @@ def modelTox(nTP, cutoff1, cutoff2, cutoff3):
     position = 0
     while position < len(alignment[0]):
         nuc_hyph = alignment[: , position]
+        
+        #print(nuc_hyph)
     
         #Remove hyphens so they don't have an impact as "negatives".
         cytotoxicityShort = cytotoxicity[(nuc_hyph!="-")]
@@ -38,8 +40,8 @@ def modelTox(nTP, cutoff1, cutoff2, cutoff3):
             testLR = testLR[['cytotoxicity', 'panC_group']]
             testLR = testLR.reset_index(drop=True)
             
-            print(position)
-            log_reg = sm.Logit(testY, testLR).fit(disp=0) #Fit the logistic regression model.
+            #print(position)
+            log_reg = sm.Logit(testY, testLR.astype(float)).fit(disp=0) #Fit the logistic regression model.
     
             #Record general data.
             df_new_row = pd.DataFrame({"gene":[gene], 
@@ -75,9 +77,9 @@ def modelTox(nTP, cutoff1, cutoff2, cutoff3):
 
 
 #Set working directiory and load in alignment and data.
-os.chdir(r'C:\Users\cassp\OneDrive\Documents\GitHub\B-cereus-cytotoxicity-SNPs\blast_results\filtered_megablast_qc50_090126\alignments\protein\mafft')
+os.chdir(r'C:\Users\princecr\Documents\GitHub\B-cereus-cytotoxicity-SNPs\data\blast_results\filtered_megablast_qc50_090126\alignments\protein\mafft')
 
-mSheet = pd.read_excel(r"C:\Users\cassp\OneDrive - Cornell University\Biomarkers paper\Mastersheet_082026.xlsx") #import file with cytotoxicity data (same order as fasta)
+mSheet = pd.read_excel(r"C:\Users\princecr\Documents\GitHub\B-cereus-cytotoxicity-SNPs\data\Mastersheet_082026.xlsx") #import file with cytotoxicity data (same order as fasta)
 
 mSheet['panC_group'] = mSheet['Adjusted_panC_Group(predicted_species)'].replace({'[*]': ''}, regex = True)
 
@@ -97,7 +99,8 @@ metadata = mSheet.loc[:, ["Isolate", "cytotoxicity", "panC_group"]]
 #nucleotides = ["A", "T", "G", "C"]
 nucleotides = ["a", "t", "g", "c"]
 proteins = ["A", "R", "D", "N", "C", "E", "Q", "G", "H", "I", "L", "K", "M", "F", "P", "S", "T", "W", "Y", "V"]
-file_dir = Path("C:/Users/cassp/OneDrive/Documents/GitHub/B-cereus-cytotoxicity-SNPs/blast_results/filtered_megablast_qc50_090126/alignments/protein/mafft")
+panC_group_list = [2, 3, 4, 5, 6]
+file_dir = Path(r"C:\Users\princecr\Documents\GitHub\B-cereus-cytotoxicity-SNPs\data\blast_results\filtered_megablast_qc50_090126\alignments\protein\mafft")
 
 for file in file_dir.glob("*.fasta"):
     fileName = str(file).split('\\')[-1]
@@ -105,12 +108,12 @@ for file in file_dir.glob("*.fasta"):
     print(gene)
 
     alignmentSeq = AlignIO.read(file, "fasta") #Import alignment file of sequences in fasta format.
-    alignment = np.array([list(rec) for rec in alignmentSeq])
+    alignment_full = np.array([list(rec) for rec in alignmentSeq])
     
     IDs = []
     for record in alignmentSeq:
         #Change names to match mastersheet. If you downloaded the sequences of hits from BTyper3, this should work. If you procured sequences by other means, you may need to change this part so you can get matching names with the mastersheet.
-        
+
         recordID = record.id
         PS_ID = recordID.split("_", 1)[0]
         row = mSheet[mSheet["Isolate"].str.contains(PS_ID)]
@@ -119,45 +122,60 @@ for file in file_dir.glob("*.fasta"):
     
     dfIDs = pd.DataFrame(IDs, columns = ["Isolate"]) 
     
-    data = dfIDs.merge(metadata)
+    data_full = dfIDs.merge(metadata)
     #data = data.sort_values('Isolate')
-    cytotoxicity = data['cytotoxicity'].values
-    cytotoxicity = cytotoxicity.reshape(-1,1)
     
     df_full = pd.DataFrame(0, index = range(0), columns = ["gene", "position", "nuc","name", "total_w", "total_wo", "avg_tox_w", "avg_tox_wo", "sd_tox_w", "sd_tox_wo", "lr_p-val_tox", "lr_p-val_phylo"])
     
-    cutoff1 = 0.95
-    cutoff2 = 0.05
+    cutoff1 = 0.90
+    cutoff2 = 0.10
     cutoff3 = 0.20 # proportion of genomes with a nuc/aa in the position, not a hyphen
     
-    # Run the model on each nucleotide or amino acid. Append data for each nucleotide to same dataframe (df_full). 
-    if "prot" in fileName:
-        for i in proteins:
-            df = modelTox(i, cutoff1, cutoff2, cutoff3)
-            df_full = pd.concat([df,df_full], ignore_index = True)
+    for group in panC_group_list:
+        #### INTEGRATE A FOR LOOP TO LOOP THROUGH ALL THE PANC GROUPS, USE THIS TO INDEX THE ALIGNMENT AND OPERATE ONLY ON THOSE SEQS
+        print(f"{gene}_group{group}")
+        data = data_full.loc[data_full["panC_group"] == group]
+        group_indeces = data.index
+        alignment = alignment_full[group_indeces]
+        cytotoxicity = data['cytotoxicity'].values
+        cytotoxicity = cytotoxicity.reshape(-1,1)
+        
+        if len(alignment) < 10:
+            print("no sequences")
+            continue
+        
+        # Run the model on each nucleotide or amino acid. Append data for each nucleotide to same dataframe (df_full). 
+        if "prot" in fileName:
+            for i in proteins:
+                df = modelTox(i, cutoff1, cutoff2, cutoff3)
+                df_full = pd.concat([df,df_full], ignore_index = True)
+                
+        if "up" in fileName:
+            for i in nucleotides:
+                df = modelTox(i, cutoff1, cutoff2, cutoff3)
+                df_full = pd.concat([df,df_full], ignore_index = True)
+        
+        #Bonferroni correction of p-values.
+        if len(df_full) > 0:
+            p_adjusted_cyt = multipletests(df_full["lr_p-val_tox"], alpha=0.05, method='bonferroni')
+            p_adjusted_phylo = multipletests(df_full["lr_p-val_phylo"], alpha=0.05, method='bonferroni')
+            corrected_cyt = pd.DataFrame(p_adjusted_cyt[1], columns = ["lr_p-val_tox_bonf"])
+            corrected_phylo = pd.DataFrame(p_adjusted_phylo[1], columns = ["lr_p-val_phylo_bonf"])
             
-    if "up" in fileName:
-        for i in nucleotides:
-            df = modelTox(i, cutoff1, cutoff2, cutoff3)
-            df_full = pd.concat([df,df_full], ignore_index = True)
+            df_final = pd.concat([df_full, corrected_cyt, corrected_phylo], axis = 1)
+            
+            
+            df_final_filt = df_final[df_final['lr_p-val_tox'] < 0.05]
+            data_filt = data[data.columns.intersection(list(df_final_filt['name']) + ["cytotoxicity", "panC_group", "Isolate"])]
+            
+            #Save the output files as .csv files. dfOutput has the general info about the SNPs. data is the SNP presence/absence matrix.
+            os.chdir(r'C:\Users\princecr\Documents\GitHub\B-cereus-cytotoxicity-SNPs\data\SNPs_by_panC')
+            df_final_filt.to_csv(f"filt\{gene}_group{group}_logreg_102726.csv", index = False)
+            data_filt.to_csv(f"filt\{gene}_group{group}_snps_102726.csv", index = False)
+            
+            df_final.to_csv(f"unfilt\{gene}_group{group}_unfilt_logreg_101426.csv", index = False)
+            data.to_csv(f"unfilt\{gene}_group{group}_unfilt_snps_101426.csv", index = False)
+            
+            
+
     
-    #Bonferroni correction of p-values.
-    if len(df_full) > 0:
-        p_adjusted_cyt = multipletests(df_full["lr_p-val_tox"], alpha=0.05, method='bonferroni')
-        p_adjusted_phylo = multipletests(df_full["lr_p-val_phylo"], alpha=0.05, method='bonferroni')
-        corrected_cyt = pd.DataFrame(p_adjusted_cyt[1], columns = ["lr_p-val_tox_bonf"])
-        corrected_phylo = pd.DataFrame(p_adjusted_phylo[1], columns = ["lr_p-val_phylo_bonf"])
-        
-        df_final = pd.concat([df_full, corrected_cyt, corrected_phylo], axis = 1)
-        
-        
-        df_final_filt = df_final[df_final['lr_p-val_tox_bonf'] < 0.05]
-        data_filt = data[data.columns.intersection(list(df_final_filt['name']) + ["cytotoxicity", "panC_group", "Isolate"])]
-        
-        #Save the output files as .csv files. dfOutput has the general info about the SNPs. data is the SNP presence/absence matrix.
-        os.chdir(r'C:\Users\cassp\OneDrive\Documents\GitHub\B-cereus-cytotoxicity-SNPs/data/mafft')
-        df_final_filt.to_csv(f"{gene}_logreg_101426.csv", index = False)
-        data_filt.to_csv(f"{gene}_snps_101426.csv", index = False)
-        
-        df_final.to_csv(f"{gene}_unfilt_logreg_101426.csv", index = False)
-        data.to_csv(f"{gene}_unfilt_snps_101426.csv", index = False)

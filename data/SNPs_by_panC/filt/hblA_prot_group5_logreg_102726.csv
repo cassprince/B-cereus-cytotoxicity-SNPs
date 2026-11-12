@@ -1,0 +1,2 @@
+gene,position,nuc,name,total_w,total_wo,avg_tox_w,avg_tox_wo,sd_tox_w,sd_tox_wo,median_tox_w,median_tox_wo,lr_p-val_tox,lr_p-val_phylo,lr_p-val_tox_bonf,lr_p-val_phylo_bonf
+hblA_prot,27,E,hblA_prot_SNP_E_27,6,37,0.8637600928333332,0.5389386016216215,0.152025883228434,0.28372961039242645,0.860674512,0.564298016,0.023544323379704343,0.0057587559077317664,1.0,0.26490277175566124
